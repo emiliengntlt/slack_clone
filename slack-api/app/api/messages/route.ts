@@ -5,6 +5,17 @@ import { messages, reactions } from '@/src/db/schema';
 // Disable static generation for this route since it requires dynamic DB access
 export const dynamic = 'force-dynamic';
 
+
+import  Pusher from "pusher"
+
+export const pusherServer = new Pusher({
+  appId: process.env.PUSHER_APP_ID!,
+  key: process.env.NEXT_PUBLIC_PUSHER_KEY!,
+  secret: process.env.PUSHER_SECRET!,
+  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+  useTLS: true,
+});
+
 // Add cors headers to the response
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*', // Be more restrictive in production
@@ -283,6 +294,15 @@ async function handleMessageCreation(request: Request) {
   };
 
   const [insertedMessage] = await db.insert(messages).values(newMessage).returning();
+
+
+  // Trigger webhook notification with the new message
+  await pusherServer.trigger(
+    `channel-${channelId}`,
+    'new-message',
+    { ...insertedMessage, reactions: [] }
+  );
+
   return NextResponse.json(
     { ...insertedMessage, reactions: [] },
     { status: 201, headers: corsHeaders }

@@ -33,9 +33,6 @@ export function UserMessage({ message, userId }: UserMessageProps) {
         }
     }
 
-  
-
-
   return (
     <div className="flex items-start space-x-3 mb-4">
       <div className="flex-shrink-0">
