@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Reaction } from './Reaction';
 export type Message = {
     id?: number;
     content?: string;
@@ -10,5 +11,6 @@ export type Message = {
     username?: string;
     userAvatar?: string;
     timestamp?: string;
+    reactions?: Array<Reaction>;
 };
 

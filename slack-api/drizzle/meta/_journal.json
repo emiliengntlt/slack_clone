@@ -29,6 +29,20 @@
       "when": 1736265019742,
       "tag": "0003_illegal_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1736266125744,
+      "tag": "0004_gigantic_umar",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1736266192711,
+      "tag": "0005_chemical_black_bolt",
+      "breakpoints": true
     }
   ]
 }

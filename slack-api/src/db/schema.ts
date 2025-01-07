@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, integer } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, integer, primaryKey } from 'drizzle-orm/pg-core';
 
 export const channels = pgTable('channels', {
   id: serial('id').primaryKey(),
@@ -15,4 +15,12 @@ export const messages = pgTable('messages', {
   username: text('username').notNull(),
   userAvatar: text('user_avatar'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-}); 
+});
+
+export const reactions = pgTable('reactions', {
+  id: serial('id').primaryKey(),
+  messageId: integer('message_id').notNull().references(() => messages.id),
+  userId: text('user_id').notNull(),
+  emoji: text('emoji').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});

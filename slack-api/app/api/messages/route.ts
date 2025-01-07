@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from '@/src/db';
-import { messages } from '@/src/db/schema';
+import { messages, reactions } from '@/src/db/schema';
 // Disable static generation for this route since it requires dynamic DB access
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +38,10 @@ const corsHeaders = {
  *         timestamp:
  *           type: string
  *           format: date-time
+ *         reactions:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Reaction'
  *     Error:
  *       type: object
  *       properties:
@@ -58,7 +62,7 @@ const corsHeaders = {
  *           type: string
  *     responses:
  *       200:
- *         description: List of messages
+ *         description: List of messages with their reactions
  *         content:
  *           application/json:
  *             schema:
@@ -67,6 +71,54 @@ const corsHeaders = {
  *                 $ref: '#/components/schemas/Message'
  *       400:
  *         description: Channel ID is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Database connection error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /api/messages:
+ *   post:
+ *     summary: Create a new message
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - channelId
+ *               - userId
+ *               - text
+ *               - username
+ *             properties:
+ *               channelId:
+ *                 type: integer
+ *               userId:
+ *                 type: string
+ *               text:
+ *                 type: string
+ *               username:
+ *                 type: string
+ *               userAvatar:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Message created successfully (includes empty reactions array)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Message'
+ *       400:
+ *         description: Missing required fields
  *         content:
  *           application/json:
  *             schema:
@@ -96,20 +148,50 @@ export async function GET(request: Request) {
       );
     }
 
-    const selectedMessages = await db
+    // First, get all messages with their reactions
+    const results = await db
       .select({
-        id: messages.id,
-        content: messages.content,
-        channelId: messages.channelId,
-        userId: messages.userId,
-        username: messages.username,
-        userAvatar: messages.userAvatar,
-        timestamp: messages.createdAt,
+        message: {
+          id: messages.id,
+          content: messages.content,
+          channelId: messages.channelId,
+          userId: messages.userId,
+          username: messages.username,
+          userAvatar: messages.userAvatar,
+          timestamp: messages.createdAt,
+        },
+        reaction: {
+          id: reactions.id,
+          emoji: reactions.emoji,
+          userId: reactions.userId,
+          createdAt: reactions.createdAt,
+        },
       })
       .from(messages)
+      .leftJoin(reactions, eq(messages.id, reactions.messageId))
       .where(eq(messages.channelId, parseInt(channelId)));
 
-    return NextResponse.json(selectedMessages, { headers: corsHeaders });
+    // Group reactions by message
+    const messagesMap = new Map();
+    
+    results.forEach((row) => {
+      const { message, reaction } = row;
+      
+      if (!messagesMap.has(message.id)) {
+        messagesMap.set(message.id, {
+          ...message,
+          reactions: [],
+        });
+      }
+      
+      if (reaction?.id) { // Only add reaction if it exists
+        messagesMap.get(message.id).reactions.push(reaction);
+      }
+    });
+
+    const formattedMessages = Array.from(messagesMap.values());
+
+    return NextResponse.json(formattedMessages, { headers: corsHeaders });
   } catch (error) {
     console.error('Database connection error:', error);
     return NextResponse.json(
@@ -148,7 +230,7 @@ export async function GET(request: Request) {
  *                 type: string
  *     responses:
  *       201:
- *         description: Message created successfully
+ *         description: Message created successfully (includes empty reactions array)
  *         content:
  *           application/json:
  *             schema:
@@ -168,32 +250,41 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { channelId, userId, text, username, userAvatar } = body;
-
-    if (!channelId || !userId || !text || !username) {
-      return NextResponse.json(
-        { error: 'Missing required fields' }, 
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
-    const newMessage = {
-      content: text,
-      channelId,
-      userId,
-      username,
-      userAvatar,
-      timestamp: new Date().toISOString(),
-    };
-
-    const insertedMessage = await db.insert(messages).values(newMessage).returning();
-    return NextResponse.json(insertedMessage[0], { status: 201, headers: corsHeaders });
+    // Handle regular message creation
+    return await handleMessageCreation(request);
   } catch (error) {
-    console.error('Database connection error:', error);
+    console.error('Database error:', error);
     return NextResponse.json(
-      { error: 'Failed to connect to database' },
+      { error: 'Failed to process request' },
       { status: 500, headers: corsHeaders }
     );
   }
+}
+
+// Helper function to handle original message creation logic
+async function handleMessageCreation(request: Request) {
+  const body = await request.json();
+  const { channelId, userId, text, username, userAvatar } = body;
+
+  if (!channelId || !userId || !text || !username) {
+    return NextResponse.json(
+      { error: 'Missing required fields' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  const newMessage = {
+    content: text,
+    channelId,
+    userId,
+    username,
+    userAvatar,
+    createdAt: new Date(),
+  };
+
+  const [insertedMessage] = await db.insert(messages).values(newMessage).returning();
+  return NextResponse.json(
+    { ...insertedMessage, reactions: [] },
+    { status: 201, headers: corsHeaders }
+  );
 }

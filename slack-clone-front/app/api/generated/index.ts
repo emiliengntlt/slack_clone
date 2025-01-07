@@ -10,5 +10,6 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export type { Channel } from './models/Channel';
 export type { Error } from './models/Error';
 export type { Message } from './models/Message';
+export type { Reaction } from './models/Reaction';
 
 export { DefaultService } from './services/DefaultService';

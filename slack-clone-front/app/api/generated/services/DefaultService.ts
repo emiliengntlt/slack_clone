@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { Channel } from '../models/Channel';
 import type { Message } from '../models/Message';
+import type { Reaction } from '../models/Reaction';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -47,7 +48,7 @@ export class DefaultService {
     /**
      * Get messages for a channel
      * @param channelId
-     * @returns Message List of messages
+     * @returns Message List of messages with their reactions
      * @throws ApiError
      */
     public static getApiMessages(
@@ -68,7 +69,7 @@ export class DefaultService {
     /**
      * Create a new message
      * @param requestBody
-     * @returns Message Message created successfully
+     * @returns Message Message created successfully (includes empty reactions array)
      * @throws ApiError
      */
     public static postApiMessages(
@@ -87,6 +88,31 @@ export class DefaultService {
             mediaType: 'application/json',
             errors: {
                 400: `Missing required fields`,
+                500: `Database connection error`,
+            },
+        });
+    }
+    /**
+     * Add a reaction to a message
+     * @param requestBody
+     * @returns Reaction Reaction created successfully
+     * @throws ApiError
+     */
+    public static postApiReactions(
+        requestBody: {
+            messageId: number;
+            userId: string;
+            emoji: string;
+        },
+    ): CancelablePromise<Reaction> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/reactions',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: `Missing required fields or reaction already exists`,
+                404: `Message not found`,
                 500: `Database connection error`,
             },
         });
