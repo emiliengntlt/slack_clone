@@ -4,24 +4,40 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Send } from 'lucide-react'
+import { DefaultService } from '../api/generated/services/DefaultService'
+import { Message } from '../api/generated'
 
 export default function ChatArea({ channel, user }) {
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
 
   useEffect(() => {
-    // TODO: Fetch messages for the selected channel
-    // For now, we'll just set some dummy messages
-    setMessages([
-      { id: 1, user: 'John', content: 'Hello everyone!' },
-      { id: 2, user: 'Jane', content: 'Hi John, how are you?' },
-    ])
+    const fetchMessages = async () => {
+      if (channel?.id) {
+        try {
+          const response = await DefaultService.getApiMessages(channel.id.toString())
+          setMessages(response)
+        } catch (error) {
+          console.error('Failed to fetch messages:', error)
+        }
+      }
+    }
+    fetchMessages()
   }, [channel])
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (newMessage.trim()) {
-      setMessages([...messages, { id: Date.now(), user: user.email, content: newMessage }])
-      setNewMessage('')
+      try {
+        const response = await DefaultService.postApiMessages({
+          channelId: channel.id,
+          userId: user.id,
+          text: newMessage
+        })
+        setMessages([...messages, response])
+        setNewMessage('')
+      } catch (error) {
+        console.error('Failed to send message:', error)
+      }
     }
   }
 
@@ -30,7 +46,7 @@ export default function ChatArea({ channel, user }) {
       <div className="flex-1 overflow-y-auto p-4">
         {messages.map((message) => (
           <div key={message.id} className="mb-2">
-            <strong>{message.user}: </strong>
+            <strong>{message.userId}: </strong>
             {message.content}
           </div>
         ))}

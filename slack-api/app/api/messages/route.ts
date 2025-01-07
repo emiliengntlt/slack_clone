@@ -6,6 +6,38 @@ import { messages } from '@/src/db/schema';
 // Disable static generation for this route since it requires dynamic DB access
 export const dynamic = 'force-dynamic';
 
+// Add cors headers to the response
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*', // Be more restrictive in production
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Message:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         content:
+ *           type: string
+ *         channelId:
+ *           type: integer
+ *         userId:
+ *           type: integer
+ *         timestamp:
+ *           type: string
+ *           format: date-time
+ *     Error:
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ */
+
 /**
  * @swagger
  * /api/messages:
@@ -20,18 +52,41 @@ export const dynamic = 'force-dynamic';
  *     responses:
  *       200:
  *         description: List of messages
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Message'
  *       400:
  *         description: Channel ID is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Database connection error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
+
+// Add OPTIONS handler for CORS preflight requests
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const channelId = searchParams.get('channelId');
 
     if (!channelId) {
-      return NextResponse.json({ error: 'Channel ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Channel ID is required' }, 
+        { status: 400, headers: corsHeaders }
+      );
     }
 
     const selectedMessages = await db
@@ -39,12 +94,12 @@ export async function GET(request: Request) {
       .from(messages)
       .where(eq(messages.channelId, parseInt(channelId)));
 
-    return NextResponse.json(selectedMessages);
+    return NextResponse.json(selectedMessages, { headers: corsHeaders });
   } catch (error) {
     console.error('Database connection error:', error);
     return NextResponse.json(
       { error: 'Failed to connect to database' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
@@ -74,10 +129,22 @@ export async function GET(request: Request) {
  *     responses:
  *       201:
  *         description: Message created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Message'
  *       400:
  *         description: Missing required fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Database connection error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function POST(request: Request) {
   try {
@@ -85,7 +152,10 @@ export async function POST(request: Request) {
     const { channelId, userId, text } = body;
 
     if (!channelId || !userId || !text) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required fields' }, 
+        { status: 400, headers: corsHeaders }
+      );
     }
 
     const newMessage = {
@@ -96,12 +166,12 @@ export async function POST(request: Request) {
     };
 
     const insertedMessage = await db.insert(messages).values(newMessage).returning();
-    return NextResponse.json(insertedMessage[0], { status: 201 });
+    return NextResponse.json(insertedMessage[0], { status: 201, headers: corsHeaders });
   } catch (error) {
     console.error('Database connection error:', error);
     return NextResponse.json(
       { error: 'Failed to connect to database' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }

@@ -1,22 +1,46 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus } from 'lucide-react'
+import { DefaultService } from '../api/generated/services/DefaultService'
+import { Channel } from '../api/generated'
 
-export default function ChannelList({ onSelectChannel }) {
-  const [channels, setChannels] = useState([
-    { id: 1, name: 'general', isPublic: true },
-    { id: 2, name: 'random', isPublic: true },
-  ])
+import { OpenAPI } from '../api/generated/core/OpenAPI';
+
+OpenAPI.BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
+
+export default function ChannelList({ onSelectChannel }: { onSelectChannel: (channel: Channel) => void }) {
+  const [channels, setChannels] = useState<Channel[]>([])
   const [newChannelName, setNewChannelName] = useState('')
 
-  const handleAddChannel = () => {
-    if (newChannelName.trim()) {
-      setChannels([...channels, { id: Date.now(), name: newChannelName, isPublic: true }])
-      setNewChannelName('')
+  useEffect(() => {
+    const fetchChannels = async () => {
+      try {
+        const response = await DefaultService.getApiChannels()
+        setChannels(response)
+      } catch (error) {
+        console.error('Failed to fetch channels:', error)
+      }
     }
+    fetchChannels()
+  }, [])
+
+  const handleAddChannel = async () => {
+    // if (newChannelName.trim()) {
+    //   try {
+    //     const newChannel = await api.createChannel({
+    //       name: newChannelName,
+    //       isPublic: true
+    //     })
+    //     setChannels([...channels, newChannel])
+    //     setNewChannelName('')
+    //   } catch (error) {
+    //     console.error('Failed to create channel:', error)
+    //   }
+    // }
   }
 
   return (
