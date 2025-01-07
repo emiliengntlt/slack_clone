@@ -1,0 +1,1 @@
+ALTER TABLE "messages" ADD COLUMN "user_id" integer DEFAULT 1 NOT NULL;

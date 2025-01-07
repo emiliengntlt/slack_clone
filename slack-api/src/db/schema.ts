@@ -10,7 +10,9 @@ export const channels = pgTable('channels', {
 export const messages = pgTable('messages', {
   id: serial('id').primaryKey(),
   content: text('content').notNull(),
-  channelId: integer('channel_id').references(() => channels.id).notNull(),
+  channelId: integer('channel_id').notNull(),
+  userId: text('user_id').notNull(),
+  username: text('username').notNull(),
+  userAvatar: text('user_avatar'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }); 

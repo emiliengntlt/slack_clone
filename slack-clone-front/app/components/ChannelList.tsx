@@ -29,18 +29,17 @@ export default function ChannelList({ onSelectChannel }: { onSelectChannel: (cha
   }, [])
 
   const handleAddChannel = async () => {
-    // if (newChannelName.trim()) {
-    //   try {
-    //     const newChannel = await api.createChannel({
-    //       name: newChannelName,
-    //       isPublic: true
-    //     })
-    //     setChannels([...channels, newChannel])
-    //     setNewChannelName('')
-    //   } catch (error) {
-    //     console.error('Failed to create channel:', error)
-    //   }
-    // }
+    if (newChannelName.trim()) {
+      try {
+        const response = await DefaultService.postApiChannels({
+          name: newChannelName,
+        })
+        setChannels([...channels, response])
+        setNewChannelName('')
+      } catch (error) {
+        console.error('Failed to create channel:', error)
+      }
+    }
   }
 
   return (

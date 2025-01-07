@@ -6,7 +6,9 @@ export type Message = {
     id?: number;
     content?: string;
     channelId?: number;
-    userId?: number;
+    userId?: string;
+    username?: string;
+    userAvatar?: string;
     timestamp?: string;
 };
 

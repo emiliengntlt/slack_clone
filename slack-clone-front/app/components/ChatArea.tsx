@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Send } from 'lucide-react'
 import { DefaultService } from '../api/generated/services/DefaultService'
 import { Message } from '../api/generated'
+import { UserMessage } from './UserMessage'
 
 export default function ChatArea({ channel, user }) {
   const [messages, setMessages] = useState<Message[]>([])
@@ -31,7 +32,9 @@ export default function ChatArea({ channel, user }) {
         const response = await DefaultService.postApiMessages({
           channelId: channel.id,
           userId: user.id,
-          text: newMessage
+          text: newMessage,
+          username: user.fullName || user.username || user.emailAddresses[0].emailAddress,
+          userAvatar: user.imageUrl
         })
         setMessages([...messages, response])
         setNewMessage('')
@@ -45,10 +48,7 @@ export default function ChatArea({ channel, user }) {
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto p-4">
         {messages.map((message) => (
-          <div key={message.id} className="mb-2">
-            <strong>{message.userId}: </strong>
-            {message.content}
-          </div>
+          <UserMessage key={message.id} message={message} />
         ))}
       </div>
       <div className="border-t p-4">

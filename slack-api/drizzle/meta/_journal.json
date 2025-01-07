@@ -8,6 +8,27 @@
       "when": 1736247531853,
       "tag": "0000_clumsy_dust",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1736261962641,
+      "tag": "0001_fine_valeria_richards",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1736264821649,
+      "tag": "0002_misty_lightspeed",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1736265019742,
+      "tag": "0003_illegal_northstar",
+      "breakpoints": true
     }
   ]
 }

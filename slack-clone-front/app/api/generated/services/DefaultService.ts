@@ -23,6 +23,28 @@ export class DefaultService {
         });
     }
     /**
+     * Create a new channel
+     * @param requestBody
+     * @returns Channel Channel created successfully
+     * @throws ApiError
+     */
+    public static postApiChannels(
+        requestBody: {
+            name: string;
+        },
+    ): CancelablePromise<Channel> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/channels',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: `Invalid request body`,
+                500: `Database error`,
+            },
+        });
+    }
+    /**
      * Get messages for a channel
      * @param channelId
      * @returns Message List of messages
@@ -52,8 +74,10 @@ export class DefaultService {
     public static postApiMessages(
         requestBody: {
             channelId: number;
-            userId: number;
+            userId: string;
             text: string;
+            username: string;
+            userAvatar?: string;
         },
     ): CancelablePromise<Message> {
         return __request(OpenAPI, {

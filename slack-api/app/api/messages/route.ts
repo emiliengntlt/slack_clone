@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { db } from '@/src/db';
 import { messages } from '@/src/db/schema';
-
 // Disable static generation for this route since it requires dynamic DB access
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +11,10 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
+
+// Initialize Clerk with your secret key
+// const clerk = clerkClient();
+
 
 /**
  * @swagger
@@ -27,7 +30,11 @@ const corsHeaders = {
  *         channelId:
  *           type: integer
  *         userId:
- *           type: integer
+ *           type: string
+ *         username:
+ *           type: string
+ *         userAvatar:
+ *           type: string
  *         timestamp:
  *           type: string
  *           format: date-time
@@ -90,7 +97,15 @@ export async function GET(request: Request) {
     }
 
     const selectedMessages = await db
-      .select()
+      .select({
+        id: messages.id,
+        content: messages.content,
+        channelId: messages.channelId,
+        userId: messages.userId,
+        username: messages.username,
+        userAvatar: messages.userAvatar,
+        timestamp: messages.createdAt,
+      })
       .from(messages)
       .where(eq(messages.channelId, parseInt(channelId)));
 
@@ -119,12 +134,17 @@ export async function GET(request: Request) {
  *               - channelId
  *               - userId
  *               - text
+ *               - username
  *             properties:
  *               channelId:
  *                 type: integer
  *               userId:
- *                 type: integer
+ *                 type: string
  *               text:
+ *                 type: string
+ *               username:
+ *                 type: string
+ *               userAvatar:
  *                 type: string
  *     responses:
  *       201:
@@ -149,9 +169,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { channelId, userId, text } = body;
+    const { channelId, userId, text, username, userAvatar } = body;
 
-    if (!channelId || !userId || !text) {
+    if (!channelId || !userId || !text || !username) {
       return NextResponse.json(
         { error: 'Missing required fields' }, 
         { status: 400, headers: corsHeaders }
@@ -161,7 +181,9 @@ export async function POST(request: Request) {
     const newMessage = {
       content: text,
       channelId,
-      userId, 
+      userId,
+      username,
+      userAvatar,
       timestamp: new Date().toISOString(),
     };
 

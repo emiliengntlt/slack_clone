@@ -8,6 +8,12 @@ import { UserResource } from '@clerk/types'
 
 export default function UserStatus({ user }: { user: UserResource } ) {
   const [status, setStatus] = useState('Available')
+
+  const statusColorMap = {
+    'Available': 'bg-green-500',
+    'Away': 'bg-yellow-500',
+    'Busy': 'bg-red-500'
+  }
   const [isEditing, setIsEditing] = useState(false)
 
   const handleStatusChange = () => {
@@ -19,7 +25,7 @@ export default function UserStatus({ user }: { user: UserResource } ) {
   return (
     <div className="flex items-center space-x-4">
       <Avatar>
-        <AvatarImage src="/placeholder-avatar.jpg" alt={userNameToDisplay} />
+        <AvatarImage src={user.imageUrl} alt={userNameToDisplay} />
         <AvatarFallback>{userNameToDisplay[0].toUpperCase()}</AvatarFallback>
       </Avatar>
       <div>
@@ -33,6 +39,7 @@ export default function UserStatus({ user }: { user: UserResource } ) {
           />
         ) : (
           <Button variant="link" onClick={() => setIsEditing(true)} className="h-auto p-0">
+            <div className={`w-2 h-2 rounded-full ${statusColorMap[status]}`}></div>
             {status}
           </Button>
         )}
