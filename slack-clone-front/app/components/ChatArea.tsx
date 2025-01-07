@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Send } from 'lucide-react'
 import { DefaultService } from '../api/generated/services/DefaultService'
-import { Message } from '../api/generated'
+import { Message, Reaction } from '../api/generated'
 import { UserMessage } from './UserMessage'
 import pusherClient from '../lib/pusher'
 
@@ -34,6 +34,19 @@ export default function ChatArea({ channel, user }) {
       pusherClient.bind('new-message', (message: Message) => {
         setMessages((prev) => [...prev, message])
       })
+
+      pusherClient.bind('new-reaction', (reaction: Reaction) => {
+        console.log('new-reaction', reaction)
+        setMessages((prev) => prev.map(message => {
+          if (message.id === reaction.messageId) {
+            return {
+              ...message,
+              reactions: [...(message.reactions || []), reaction]
+            }
+          }
+          return message
+        }))
+      })
     }
 
     // Cleanup function
@@ -42,6 +55,7 @@ export default function ChatArea({ channel, user }) {
         const channelName = `channel-${channel.id}`
         pusherClient.unsubscribe(channelName)
         pusherClient.unbind('new-message')
+        pusherClient.unbind('new-reaction')
       }
     }
   }, [channel])

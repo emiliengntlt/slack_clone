@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '@/src/db';
 import { messages, reactions } from '@/src/db/schema';
+import { pusherServer } from '../messages/route';
 
 // Disable static generation for this route
 export const dynamic = 'force-dynamic';
@@ -146,6 +147,19 @@ export async function POST(request: Request) {
       .insert(reactions)
       .values(newReaction)
       .returning();
+
+    // Get the channel ID for the message
+    const [message] = await db
+      .select({ channelId: messages.channelId })
+      .from(messages)
+      .where(eq(messages.id, messageId));
+
+    // Trigger Pusher event for the new reaction
+    await pusherServer.trigger(
+      `channel-${message.channelId}`,
+      'new-reaction',
+      insertedReaction
+    );
 
     return NextResponse.json(insertedReaction, {
       status: 201,

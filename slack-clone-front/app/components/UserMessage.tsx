@@ -13,8 +13,6 @@ export function UserMessage({ message, userId }: UserMessageProps) {
         acc[key] = (acc[key] || 0) + 1
         return acc
     }, {} as Record<string, number>)
-
-    const [localReactionCounts, setLocalReactionCounts] = useState<Record<string, number>>(reactionCounts || {})
     const [showEmojis, setShowEmojis] = useState(false)
 
     const handleAddReaction = async (emoji: string) => {
@@ -27,7 +25,6 @@ export function UserMessage({ message, userId }: UserMessageProps) {
                 userId: userId,
                 emoji: emoji
             })
-            setLocalReactionCounts(prev => ({ ...prev, [emoji]: (prev[emoji] || 0) + 1 }))
         } catch (error) {
             console.error('Failed to add reaction:', error)
         }
@@ -52,7 +49,7 @@ export function UserMessage({ message, userId }: UserMessageProps) {
         <p className="text-gray-700 mt-1">{message.content}</p>
         {
             <div className="flex items-center space-x-1 mt-1">
-                {Object.entries(localReactionCounts || {}).map(([emoji, count]) => (
+                {Object.entries(reactionCounts || {}).map(([emoji, count]) => (
                     <span key={emoji} className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-xs text-gray-500">{emoji} {count}</span>
                 ))}
                 <div className="relative inline-block">
