@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Send } from 'lucide-react'
+import { Paperclip, Send } from 'lucide-react'
 import { DefaultService } from '../api/generated/services/DefaultService'
 import { Message, Reaction } from '../api/generated'
 import { UserMessage } from './UserMessage'
@@ -36,7 +36,6 @@ export default function ChatArea({ channel, user }) {
       })
 
       pusherClient.bind('new-reaction', (reaction: Reaction) => {
-        console.log('new-reaction', reaction)
         setMessages((prev) => prev.map(message => {
           if (message.id === reaction.messageId) {
             return {
@@ -80,6 +79,14 @@ export default function ChatArea({ channel, user }) {
 
   return (
     <div className="flex h-full flex-col">
+      {messages.length === 0 && (
+        <div className="flex h-full items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <span className="text-9xl">💨</span>
+            <h2 className="text-2xl font-medium text-gray-600">This is the start of your conversation</h2>
+          </div>
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto p-4">
         {messages.map((message) => (
           <UserMessage key={message.id} message={message} userId={user.id} />
@@ -91,8 +98,29 @@ export default function ChatArea({ channel, user }) {
             placeholder="Type a message..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSendMessage();
+              }
+            }}
             className="mr-2"
           />
+          <Button size="icon" variant="ghost" className="mr-2">
+            <>
+              <input
+                type="file"
+                className="hidden"
+                id="file-upload"
+                onChange={(e) => {
+                  // Handle file upload here
+                  console.log(e.target.files)
+                }}
+              />
+              <label htmlFor="file-upload">
+                <Paperclip className="h-4 w-4 cursor-pointer" />
+              </label>
+            </>
+          </Button>
           <Button onClick={handleSendMessage} size="icon">
             <Send className="h-4 w-4" />
           </Button>

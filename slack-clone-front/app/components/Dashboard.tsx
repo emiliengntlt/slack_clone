@@ -21,7 +21,16 @@ export default function Dashboard({ user, onLogout }: { user: UserResource, onLo
         </Button>
       </div>
       <div className="flex-1">
-        <ChatArea channel={selectedChannel} user={user} />
+        {selectedChannel ? (
+          <ChatArea channel={selectedChannel} user={user} />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <span className="text-9xl">👋</span>
+              <h1 className="text-3xl font-bold">Welcome to Gauntlack</h1>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
